@@ -2,7 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 // IMPORT BOOTSTRAP
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+// IMPORT FONTS
+import 'font-awesome/css/font-awesome.min.css';
+// IMPORT SOCIAL ICONS
+import 'bootstrap-social/bootstrap-social.css';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
