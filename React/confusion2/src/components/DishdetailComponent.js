@@ -5,6 +5,11 @@ import { Link } from 'react-router-dom';
 
 import {  LocalForm, Errors, Control } from 'react-redux-form';  // Assignment 3
 
+import { Loading } from './LoadingComponent';
+import { baseUrl } from '../shared/baseUrl';
+
+import { FadeTransform, Fade, Stagger } from 'react-animation-components';
+
 const required = (val) => val && val.length;
 const maxLength = (len) => (val) => !(val) || (val.length <= len);
 const minLength = (len) => (val) => (val) && (val.length >= len);
@@ -29,6 +34,8 @@ export class CommentWriter extends Component {
     handleSubmit(values) {
         console.log("Current state is DishDetail: " + JSON.stringify(values));
         alert("Current state is DishDetail: " + JSON.stringify(values));
+        //
+        this.props.postComment(this.props.dishId, values.rating, values.author, values.comment);
     }
 
     render(){
@@ -58,12 +65,12 @@ export class CommentWriter extends Component {
                                     <Row className='form-group'>
                                         <Label htmlFor='name' md={10}>Your Name</Label>
                                         <Col md={12}>
-                                            <Control.text model='.name' className='form-control' id='name' name='name' placeholder='Type Your Name Here!' 
+                                            <Control.text model='.author' className='form-control' id='author' name='author' placeholder='Type Your Name Here!' 
                                             validators={{
                                                 required, minLength: minLength(3), maxLength: maxLength(15)
                                             }}
                                             />
-                                            <Errors className='text-danger' model='.name' show='touched' messages={{
+                                            <Errors className='text-danger' model='.author' show='touched' messages={{
                                                 required: 'Required - ',
                                                 minLength: 'Name must be greater than 3 characters!',
                                                 maxLength: 'Name must be inferior than 15 characters!'
@@ -94,13 +101,17 @@ export class CommentWriter extends Component {
         if (dish != null) {
             return (
                 <div className='col-12 col-md-5 m-1'>
-                    <Card>
-                        <CardImg width="100%" src={dish.image} alt={dish.name} />
-                        <CardBody>
-                            <CardTitle>{dish.name}</CardTitle>
-                            <CardText>{dish.description}</CardText>
-                        </CardBody>
-                    </Card>
+                    <FadeTransform in transformProps={{
+                        exitTransform: 'scale(0.5) translateY(-50%)'
+                         }}>
+                        <Card>
+                            <CardImg width="100%" src={baseUrl + dish.image} alt={dish.name} />
+                            <CardBody>
+                                <CardTitle>{dish.name}</CardTitle>
+                                <CardText>{dish.description}</CardText>
+                            </CardBody>
+                        </Card>
+                    </FadeTransform>
                 </div>
             );
         }else{
@@ -110,19 +121,23 @@ export class CommentWriter extends Component {
         }
     }
 
-    function RenderComment({ comments }){
+    function RenderComment({ comments, postComment, dishId }){
         if (comments != null) {
             const comment = comments.map((com) => {
                 return (
                     <div>
-                        <Card>
-                            <CardBody>
-                                <CardTitle>{com.author}</CardTitle>
-                                <CardText>{com.comment}</CardText>
-                                <CardText>{new Intl.DateTimeFormat().format(new Date(com.date))}</CardText>
-                                <CardText>{com.rating} &#11088; </CardText> 
-                            </CardBody>
-                        </Card>
+                        <Stagger in>
+                            <Card>
+                                <CardBody>
+                                    <Fade in>
+                                        <CardTitle>{com.author}</CardTitle>
+                                        <CardText>{com.comment}</CardText>
+                                        <CardText>{new Intl.DateTimeFormat().format(new Date(com.date))}</CardText>
+                                        <CardText>{com.rating} &#11088; </CardText> 
+                                    </Fade>
+                                </CardBody>
+                            </Card>
+                        </Stagger>
                     </div>
                 );
             });
@@ -131,7 +146,7 @@ export class CommentWriter extends Component {
                 <div  className='col-12 col-md-6 m-1'>
                     <h4> Comments </h4>
                     <p> {comment} </p> 
-                    <CommentWriter />
+                    <CommentWriter dishId={dishId} postComment={postComment} />
                 </div>
                 
             );
@@ -145,6 +160,26 @@ export class CommentWriter extends Component {
 
     const DishDetail = (props) => {
             const dish = props.dish;
+            if (props.isLoading) {
+                return (
+                    <div className='container'>
+                        <div className='row'>
+                            <Loading />
+                        </div>
+                    </div>
+                );
+            }
+            else if (props.errMess) {
+                return (
+                    <div className='container'>
+                        <div className='row'>
+                            <h4>{props.errMess}</h4>
+                        </div>
+                    </div>
+                );
+            }
+
+
             if(dish == null){
                 return(<div>HAHA</div>);
             }
@@ -164,7 +199,9 @@ export class CommentWriter extends Component {
                             <hr />
                         </div>
                         <RenderDish dish={props.dish} />
-                        <RenderComment comments={props.comments} />
+                        <RenderComment comments={props.comments} 
+                        postComment={props.postComment}
+                        dishId={props.dish.id} />
                     </div>
                 </div>
             );
